@@ -3,27 +3,42 @@ import {
   Controller, Delete,
   Get,
   Inject,
-  LoggerService, Param, Patch,
+  LoggerService, Next, Param, ParseIntPipe, Patch,
   Post,
-  Query, UseFilters,
+  Query,
+  Req,
+  Res,
+  SetMetadata,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from './user.entity';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { GetUsersReq } from './model/req/getusers.req';
-import { TypeormFilter } from '../filter/typeorm.filter';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
+import { OrderService } from 'src/order/order.service';
+import { NextFunction } from 'express';
+import { Metadata } from 'src/decorator/metadata.decorator';
+import { HasRole } from 'src/decorator/hasRole.decorator';
+import { Role } from 'src/enum/role.enum';
 
 @Controller('user')
 // 绑定过滤器
 // @UseFilters(TypeormFilter)
 export class UserController {
   constructor(
-    private userService: UserService,
+    // 构造器注入
+    @Inject('userSvc')private userService: UserService,
+    @Inject('xbox') private xbox: {key: string, value: number},
+    @Inject('nintendo') private nintendo: {key: string, value: string},
     @Inject(WINSTON_MODULE_NEST_PROVIDER) private readonly logger: LoggerService) {}
+
+    // @Inject('userSvc')
+    // private userService: UserService;
 
   @Get()
   getUsers(@Query() getUsersReq: GetUsersReq): any {
-    // todo:接收到的get参数是string类型,要对number类型的字段做校验
     console.log("getUsers req data:", getUsersReq);
     return this.userService.findAll(getUsersReq);
   }
@@ -40,12 +55,16 @@ export class UserController {
   getUserProfile(@Param('id') id: number, @Query('hello') query: any): any {
     console.log('getUserProfile id:', id);
     console.log('getUserProfile req params:', query);
+    console.log(this.nintendo);
     return this.userService.findProfile(id);
   }
 
   // 路径参数
   @Get('/:id')
-  getUser(@Param('id') id: number): any {
+  @HasRole(Role.ADMIN, Role.USER)
+  @Metadata({id: 'getUser', url: '/user/:id'})
+  getUser(@Param('id') id: number, @Req() req: Request, @Res({passthrough: true}) res: Response): any {
+    console.log('url: ', req.url);
     return this.userService.findOne(id);
   }
 
@@ -73,5 +92,12 @@ export class UserController {
       code: o.code,
       times: o.times,
     }));
+  }
+
+  @Post('/img')
+  @UseInterceptors(AnyFilesInterceptor({dest: 'img/'}))
+  uploadImg(@Body() dto: any, @UploadedFiles() files: Array<Express.Multer.File>): any {
+    console.log(files);
+    return `received: ${JSON.stringify(dto)}`;
   }
 }

@@ -1,4 +1,4 @@
-import { Global, Module } from '@nestjs/common';
+import { Global, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { UserModule } from './user/user.module';
 import { ConfigModule } from '@nestjs/config';
 import * as dotenv from 'dotenv';
@@ -11,6 +11,12 @@ import { Logger } from '@nestjs/common';
 import { LogModule } from './log/log.module';
 import { RoleModule } from './role/role.module';
 import { dbParams } from '../ormconfig';
+import { OrderModule } from './order/order.module';
+import { LogMiddleware } from './log.middleware';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { RoleGuard } from './role.guard';
+import { TimeInterceptor } from './time.interceptor';
+import { AllExceptionFilter } from './filter/all-exception.filter';
 
 const envFilePath = `.env.${process.env.NODE_ENV || 'dev'}`;
 
@@ -18,7 +24,7 @@ const envFilePath = `.env.${process.env.NODE_ENV || 'dev'}`;
 @Module({
   imports: [
     ConfigModule.forRoot({
-      // 注册为全局模块
+      // 声明为全局模块
       isGlobal: true,
       envFilePath,
       load: [() => dotenv.config({ path: '.env' })],
@@ -59,11 +65,34 @@ const envFilePath = `.env.${process.env.NODE_ENV || 'dev'}`;
     UserModule,
     LogModule,
     RoleModule,
+    OrderModule,
   ],
   controllers: [],
-  providers: [Logger],
-  // 要让其它模块导入的话,先导出,再加上该模块是全局模块,其它模块可以省去导入,直接使用
+  providers: [
+    Logger,
+    // 声明全局守卫,该方式会将其放入ioc容器,这样就可以在守卫里注入其他的provider
+    {
+      provide: APP_GUARD,
+      useClass: RoleGuard
+    },
+    // 声明全局拦截器
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TimeInterceptor
+    },
+    // 声明全局异常处理器
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionFilter
+    }
+  ],
+  // 其他模块只能注入导出的provider
+  // 其它模块可以不用导入全局模块,直接注入使用
   exports: [Logger],
 })
-export class AppModule {
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    // 声明路由中间件,配置其生效的路由
+    consumer.apply(LogMiddleware).forRoutes('/order/*');
+  }
 }

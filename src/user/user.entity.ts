@@ -1,4 +1,13 @@
-import { Column, Entity, JoinTable, ManyToMany, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  AfterInsert, AfterRemove,
+  Column,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  OneToMany,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Log } from '../log/log.entity';
 import { Role } from '../role/role.entity';
 import { Profile } from './profile.entity';
@@ -27,4 +36,14 @@ export class User {
 
   @OneToOne(() => Profile, (profile) => profile.user)
   profile: Profile;
+
+  @AfterInsert()
+  afterInsert() {
+    console.log('after insert hooks', this.username);
+  }
+
+  @AfterRemove()
+  afterRemove() {
+    console.log("after remove hooks", this.username);
+  }
 }

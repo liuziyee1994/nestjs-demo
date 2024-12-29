@@ -90,8 +90,11 @@ export class UserService {
     return this.userRepository.update(id, user);
   }
 
-  remove(id: number) {
-    return this.userRepository.delete(id);
+  async remove(id: number) {
+    // return this.userRepository.delete(id);
+    // todo:这里要加上await,不加的话返回的是Promise<User>
+    const user = await this.findOne(id);
+    return this.userRepository.remove(user);
   }
 
   findProfile(id: number) {
@@ -142,5 +145,9 @@ export class UserService {
       .addOrderBy('times', 'DESC')
       .limit(5)
       .getRawMany();*/
+  }
+
+  getFoobar() {
+    return "this is foobar";
   }
 }
