@@ -5,10 +5,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './user.entity';
 import { Log } from '../log/log.entity';
 import { OrderModule } from 'src/order/order.module';
+import { CouponModule } from 'src/coupon/coupon.module';
 
 @Global()
 @Module({
-  // 必须要导入(把repo实例化并放入容器),才可以注入
   imports: [
     TypeOrmModule.forFeature([User, Log]),
   ],

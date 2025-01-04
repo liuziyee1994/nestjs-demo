@@ -9,7 +9,6 @@ import { conditionUtils } from '../utils/orm.helper';
 @Injectable()
 export class UserService {
   constructor(
-    // @Autowired
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     @InjectRepository(Log) private readonly logRepository: Repository<Log>,
   ) {

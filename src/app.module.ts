@@ -17,6 +17,7 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { RoleGuard } from './role.guard';
 import { TimeInterceptor } from './time.interceptor';
 import { AllExceptionFilter } from './filter/all-exception.filter';
+import { CouponModule } from './coupon/coupon.module';
 
 const envFilePath = `.env.${process.env.NODE_ENV || 'dev'}`;
 
@@ -66,6 +67,11 @@ const envFilePath = `.env.${process.env.NODE_ENV || 'dev'}`;
     LogModule,
     RoleModule,
     OrderModule,
+    CouponModule.register({
+      min: 10,
+      max: 50,
+      isGlobal: true,
+    })
   ],
   controllers: [],
   providers: [

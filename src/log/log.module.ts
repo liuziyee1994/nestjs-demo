@@ -1,13 +1,15 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { utilities, WinstonModule, WinstonModuleOptions } from 'nest-winston';
 import { ConfigService } from '@nestjs/config';
 import * as winston from 'winston';
 import { LogEnum } from '../enum/config.enum';
 import { LogController } from './log.controller';
 import { LogService } from './log.service';
+import { OrderModule } from 'src/order/order.module';
 
 @Module({
   imports: [
+    forwardRef(() => OrderModule),
     WinstonModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
@@ -36,6 +38,7 @@ import { LogService } from './log.service';
   ],
   controllers: [LogController],
   providers: [LogService],
+  exports: [LogService]
 })
 export class LogModule {
 }
